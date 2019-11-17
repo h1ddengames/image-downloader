@@ -1,12 +1,14 @@
 package net.h1ddengames.imagedownloader;
 
 import io.github.bonigarcia.wdm.WebDriverManager;
+import org.apache.commons.lang3.CharSet;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.WebElement;
 import org.openqa.selenium.chrome.ChromeDriver;
 import org.openqa.selenium.chrome.ChromeOptions;
+import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RestController;
@@ -17,8 +19,11 @@ import java.awt.image.BufferedImage;
 import java.io.File;
 import java.net.URL;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
+import java.util.function.Predicate;
+import java.util.stream.Collectors;
 
 @RestController
 public class ImageDownloaderController {
@@ -27,7 +32,8 @@ public class ImageDownloaderController {
     private WebDriver driver; // A handle to pass instructions to the browser.
 
     private void setup() {
-        WebDriverManager.chromedriver().setup(); // Setup Chrome.
+        WebDriverManager.chromedriver().version("78.0.3904.70").setup(); // Setup Chrome.
+
         ChromeOptions chromeOptions = new ChromeOptions(); // Setup options for the browser.
         if(showBrowserWindow) {
             // If showBrowserWindow == true that means you want the browser to be visible.
@@ -54,36 +60,36 @@ public class ImageDownloaderController {
 
     @PostMapping("/download/default/single")
     private String downloadImage(@RequestBody String url) {
-        List<String> urls = new ArrayList<>();
-        urls.add(url);
-
-        List<String> urlList = downloadImages(urls);
-        return urlList.get(0);
+        // Wrap the given String as a list, then use downloadImages method to download, finally display the result to the user.
+        return downloadImages(url).get(0);
     }
 
     @PostMapping("/download/default/batch")
-    private List<String> downloadImages(@RequestBody List<String> urlList) {
+    private List<String> downloadImages(@RequestBody String urls) {
         setup(); // Start the browser.
         HelperMethods.generateDirectory(savePath); // Generate the folder that will hold all the images.
 
-        for (int i = 0; i < urlList.size(); i++) {
-            driver.navigate().to(urlList.get(i)); // Go to each URL given in the data.
+        List<String> urlsList = HelperMethods.convertStringToListBySeparatorRemoveEmpty(urls, "\n");
+        List<Boolean> downloaded = new ArrayList<>();
+
+        for (int i = 0; i < urlsList.size(); i++) {
+            HelperMethods.print(urlsList.get(i));
+            driver.navigate().to(urlsList.get(i)); // Go to each URL given in the data.
             WebElement image = driver.findElement(By.tagName("img")); // Find the image to download.
             String imgSrc = image.getAttribute("src"); // Find the URL listed in the src attribute.
 
             try {
                 URL imageURL = new URL(imgSrc); // Store the string as URL object.
                 BufferedImage saveImage = ImageIO.read(imageURL); // Save the image in memory.
-                // Save image to disk.
-                ImageIO.write(saveImage, "png",
+                ImageIO.write(saveImage, "png", // Save image to disk.
                         new File(savePath + "image" + "-" + HelperMethods.generateRandomString() +".png"));
-            } catch (Exception e) { }
+            } catch (Exception e) { downloaded.add(false); }
 
-            urlList.add(i, urlList.get(i) + "Downloaded.");
+            downloaded.add(true);
         }
 
-        tearDown();
+        tearDown(); // Close the browser.
 
-        return urlList;
+        return urlsList;
     }
 }

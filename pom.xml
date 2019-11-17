@@ -17,7 +17,7 @@
 	<properties>
 		<java.version>11</java.version>
 		<selenium-java.version>3.141.59</selenium-java.version>
-		<webdrivermanager.version>3.6.2</webdrivermanager.version>
+		<webdrivermanager.version>3.7.1</webdrivermanager.version>
 	</properties>
 
 	<dependencies>

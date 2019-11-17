@@ -1,16 +1,19 @@
 package net.h1ddengames.imagedownloader;
 
 import lombok.Data;
+import org.apache.commons.lang3.ArrayUtils;
 import org.apache.commons.lang3.RandomStringUtils;
 import org.apache.commons.lang3.RandomUtils;
 import java.io.File;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.function.Predicate;
 import java.util.stream.Collectors;
 
 @Data
 public class HelperMethods {
+    private static boolean displayLogs = false;
     private static int lengthOfStrings = 10;
     private static boolean allowLetters = true;
     private static boolean allowNumbers = true;
@@ -32,6 +35,10 @@ public class HelperMethods {
                     "Taylor", "Anderson", "Thomas", "Jackson", "Harris", "Martin", "Thompson",
                     "Garcia", "Martinez", "Robinson", "Clark", "Rodriguez", "Lewis", "Lee"
     ));
+
+    static void print(Object value) {
+        if(displayLogs) { System.out.println(value); }
+    }
 
     static void generateDirectory(String filePath) {
         File directory = new File(filePath);
@@ -62,6 +69,14 @@ public class HelperMethods {
 
     static <T> T getRandomElementFromArray(T[] array) {
         return array[generateRandomNumberInRange(0, array.length - 1)];
+    }
+
+    static List<String> convertStringToListBySeparatorRemoveEmpty(String str, String separator) {
+        //Predicate<String> isEmpty = Predicate.not(i -> i.contentEquals(""));
+        List<String> list = Arrays.stream(str.split(separator))
+                .filter(Predicate.not(i -> i.contentEquals("")))
+                .collect(Collectors.toList());
+        return list;
     }
 
     static String convertStringArrayToString(String[] arr) {
